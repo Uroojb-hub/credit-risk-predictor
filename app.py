@@ -185,7 +185,7 @@ with tab1:
 with tab2:
     st.subheader("Historical Portfolio Benchmarks")
     
-    # Portfolio Overview Metrics
+    # Summary Metrics
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Total Applicants", len(df))
     m2.metric("Avg Credit Amount", f"${df['Credit amount'].mean():,.0f}")
@@ -194,21 +194,37 @@ with tab2:
 
     st.markdown("---")
 
-    # Dark Theme Seaborn Plots
     fig_col1, fig_col2 = st.columns(2)
 
     with fig_col1:
-        st.markdown("##### Credit Amount Distribution by Housing")
-        fig, ax = plt.subplots(figsize=(6, 4.2))
-        sns.boxplot(data=df, x='Housing', y='Credit amount', palette=['#3B82F6', '#10B981', '#6366F1'], ax=ax)
-        ax.set_ylabel("Credit Amount ($)")
+        st.markdown("##### Average Credit Amount by Housing Status")
+        housing_avg = df.groupby('Housing')['Credit amount'].mean().reset_index()
+        
+        fig1, ax1 = plt.subplots(figsize=(6, 4))
+        bars = ax1.bar(housing_avg['Housing'], housing_avg['Credit amount'], color='#3B82F6', width=0.5)
+        ax1.set_ylabel("Average Credit ($)")
+        
+        # Add value labels on top of each bar
+        for bar in bars:
+            yval = bar.get_height()
+            ax1.text(bar.get_x() + bar.get_width()/2, yval + 100, f"${yval:,.0f}", ha='center', va='bottom', color='#F3F4F6', fontsize=10)
+            
         sns.despine()
-        st.pyplot(fig)
+        st.pyplot(fig1)
+        plt.close(fig1)
 
     with fig_col2:
-        st.markdown("##### Age vs. Credit Amount Overview")
-        fig, ax = plt.subplots(figsize=(6, 4.2))
-        sns.scatterplot(data=df, x='Age', y='Credit amount', hue='Sex', palette=['#3B82F6', '#EC4899'], alpha=0.8, ax=ax)
-        ax.set_ylabel("Credit Amount ($)")
+        st.markdown("##### Applicant Breakdown by Job Level & Sex")
+        job_map = {0: 'Unskilled (Unres)', 1: 'Unskilled (Res)', 2: 'Skilled', 3: 'Highly Skilled'}
+        df_job = df.copy()
+        df_job['Job Level'] = df_job['Job'].map(job_map)
+        
+        fig2, ax2 = plt.subplots(figsize=(6, 4))
+        sns.countplot(data=df_job, x='Job Level', hue='Sex', palette=['#3B82F6', '#EC4899'], ax=ax2)
+        ax2.set_ylabel("Applicant Count")
+        ax2.set_xlabel("")
+        plt.xticks(rotation=15)
+        
         sns.despine()
-        st.pyplot(fig)
+        st.pyplot(fig2)
+        plt.close(fig2)
